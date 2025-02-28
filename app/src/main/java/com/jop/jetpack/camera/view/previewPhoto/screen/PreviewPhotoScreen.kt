@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,12 +33,11 @@ import androidx.navigation.NavHostController
 import com.jop.jetpack.camera.data.model.ImageCapture
 import com.jop.jetpack.camera.ui.component.CustomAlertDialog
 import com.jop.jetpack.camera.ui.component.CustomToolbar
-import com.jop.jetpack.camera.view.previewPhoto.viewModel.PreviewPhotoViewModel
-import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.Job
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PreviewPhotoScreen(navController: NavHostController, imageCapture: ImageCapture?, viewModel: PreviewPhotoViewModel = koinViewModel()) {
+fun PreviewPhotoScreen(navController: NavHostController, imageCapture: ImageCapture?, deleteImage: (ImageCapture) -> Job) {
     val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     val showAlertDialog = remember { mutableStateOf(false) }
     var scale by remember { mutableFloatStateOf(1f) }
@@ -80,7 +78,7 @@ fun PreviewPhotoScreen(navController: NavHostController, imageCapture: ImageCapt
                 btnConfirmText = "Hapus",
                 btnCancelText = "Batal",
                 btnConfirmAction = {
-                    viewModel.deleteImage(imageCapture!!)
+                    deleteImage(imageCapture!!)
                     onBackPressedDispatcher?.onBackPressed()
                 },
                 onDismiss = {

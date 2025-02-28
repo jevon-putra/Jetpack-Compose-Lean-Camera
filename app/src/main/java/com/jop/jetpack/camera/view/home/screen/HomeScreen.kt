@@ -33,12 +33,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -46,17 +45,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
+import com.jop.jetpack.camera.data.model.ImageCapture
 import com.jop.jetpack.camera.ui.component.CustomAlertDialog
 import com.jop.jetpack.camera.ui.component.CustomToolbar
 import com.jop.jetpack.camera.ui.component.PermissionDialog
 import com.jop.jetpack.camera.ui.route.Route
-import com.jop.jetpack.camera.view.home.viewModel.HomeViewModel
-import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.Job
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel = koinViewModel()) {
-    val listImage = viewModel.getAllImages.observeAsState(initial = emptyList())
+fun HomeScreen(navController: NavHostController, listState: State<List<ImageCapture>>, deleteAll: () -> Job) {
     val context = LocalContext.current
     val showAlertPermission = remember { mutableStateOf(false) }
     val showAlertDelete = remember { mutableStateOf(false) }
@@ -125,12 +123,12 @@ fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel = koin
                 message = "Apakah anda yakin ingin menghapus semua gambar?",
                 btnConfirmText = "Hapus",
                 btnCancelText = "Batal",
-                btnConfirmAction = { viewModel.deleteAll() },
+                btnConfirmAction = { deleteAll() },
                 onDismiss = { showAlertDelete.value = false }
             )
         }
 
-        if(listImage.value.isEmpty()){
+        if(listState.value.isEmpty()){
             Column(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 verticalArrangement = Arrangement.spacedBy(
@@ -161,7 +159,7 @@ fun HomeScreen(navController: NavHostController, viewModel: HomeViewModel = koin
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(16.dp)
             ) {
-                items(listImage.value) { image ->
+                items(listState.value) { image ->
                     Card(
                         modifier = Modifier
                             .aspectRatio(1f)

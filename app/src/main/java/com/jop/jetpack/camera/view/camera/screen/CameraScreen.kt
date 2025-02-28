@@ -1,6 +1,7 @@
 package com.jop.jetpack.camera.view.camera.screen
 
 import android.app.Activity
+import android.graphics.Bitmap
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Check
@@ -34,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,14 +46,12 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.jop.jetpack.camera.MainActivity
-import com.jop.jetpack.camera.data.model.ImageCapture
 import com.jop.jetpack.camera.ui.component.CustomToolbar
-import com.jop.jetpack.camera.view.camera.viewModel.CameraViewModel
-import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.Job
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CameraScreen(navController: NavHostController, viewModel: CameraViewModel = koinViewModel()) {
+fun CameraScreen(navController: NavHostController, imageState: MutableState<Bitmap?>, insertImage: () -> Job) {
     val context = LocalContext.current
     val activity = context as Activity
 
@@ -63,7 +61,7 @@ fun CameraScreen(navController: NavHostController, viewModel: CameraViewModel = 
         }
     }
 
-    if(viewModel.imageResult.value == null){
+    if(imageState.value == null){
         Box(
             modifier = Modifier.fillMaxSize()
         ){
@@ -113,7 +111,7 @@ fun CameraScreen(navController: NavHostController, viewModel: CameraViewModel = 
                 onClick = {
                     (activity as MainActivity).takePicture(
                         controller,
-                        onPhotoTaken = { bitmap -> viewModel.imageResult.value = bitmap }
+                        onPhotoTaken = { bitmap -> imageState.value = bitmap }
                     )
                 }
             ) {
@@ -144,7 +142,7 @@ fun CameraScreen(navController: NavHostController, viewModel: CameraViewModel = 
                 Image(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     contentScale = ContentScale.Crop,
-                    bitmap = viewModel.imageResult.value!!.asImageBitmap(),
+                    bitmap = imageState.value!!.asImageBitmap(),
                     contentDescription = "",
                 )
 
@@ -158,7 +156,7 @@ fun CameraScreen(navController: NavHostController, viewModel: CameraViewModel = 
                 ){
                     IconButton(
                         modifier = Modifier.size(60.dp),
-                        onClick = { viewModel.imageResult.value = null }
+                        onClick = { imageState.value = null }
                     ) {
                         Icon(
                             modifier = Modifier.fillMaxSize().padding(8.dp),
@@ -171,7 +169,7 @@ fun CameraScreen(navController: NavHostController, viewModel: CameraViewModel = 
                     IconButton(
                         modifier = Modifier.size(60.dp),
                         onClick = {
-                            viewModel.insert()
+                            insertImage()
                             navController.popBackStack()
                         }
                     ) {
